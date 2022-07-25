@@ -39,7 +39,7 @@ func main() {
 	gomniauth.SetSecurityKey("PUT YOUR AUTH KEY HERE")
 	gomniauth.WithProviders(
 		facebook.New("key", "secret", "http://localhost:8080/auth/callback/facebook"),
-		github.New(GitHubClientId, GitHubClientSecret, "http://localhost:8080/auth/callback/gihub"),
+		github.New(GitHubClientId, GitHubClientSecret, "http://localhost:8080/auth/callback/github"),
 		google.New(GoogleClientId, GoogleClientSecret, "http://localhost:8080/auth/callback/google"),
 	)
 	r := newRoom()
