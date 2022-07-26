@@ -42,7 +42,7 @@ func main() {
 		github.New(GitHubClientId, GitHubClientSecret, GitAuthCallback),
 		google.New(GoogleClientId, GoogleClientSecret, GoogleAuthCallback),
 	)
-	r := newRoom()
+	r := newRoom(useGravatar)
 	//r.tracer = trace.New(os.Stdout)
 	http.Handle("/chat", MustAuth(&templateHandler{filename: "chat.html"}))
 	http.Handle("/login", &templateHandler{filename: "login.html"})
