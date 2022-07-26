@@ -6,5 +6,5 @@ type message struct {
 	Name      string
 	Message   string
 	when      time.Time
-	avatarURL string
+	AvatarURL string
 }
