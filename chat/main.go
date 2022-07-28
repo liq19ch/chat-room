@@ -14,6 +14,12 @@ import (
 	"sync"
 )
 
+var avatars Avatar = TryAvatars{
+	UseFileAvatar,
+	UseAuthAvatar,
+	useGravatar,
+}
+
 type templateHandler struct {
 	once     sync.Once
 	filename string
@@ -38,16 +44,20 @@ func main() {
 	flag.Parse()
 	gomniauth.SetSecurityKey("PUT YOUR AUTH KEY HERE")
 	gomniauth.WithProviders(
-		facebook.New("key", "secret", "http://localhost:8080/auth/callback/facebook"),
-		github.New(GitHubClientId, GitHubClientSecret, "http://localhost:8080/auth/callback/github"),
-		google.New(GoogleClientId, GoogleClientSecret, "http://localhost:8080/auth/callback/google"),
+		facebook.New("key", "secret", FacebookAuthCallback),
+		github.New(GitHubClientId, GitHubClientSecret, GitAuthCallback),
+		google.New(GoogleClientId, GoogleClientSecret, GoogleAuthCallback),
 	)
-	r := newRoom()
+	r := newRoom(avatars)
 	//r.tracer = trace.New(os.Stdout)
 	http.Handle("/chat", MustAuth(&templateHandler{filename: "chat.html"}))
 	http.Handle("/login", &templateHandler{filename: "login.html"})
 	http.HandleFunc("/auth/", loginHandler)
 	http.Handle("/room", r)
+	http.HandleFunc("/logout", logoutHandler)
+	http.Handle("/upload", &templateHandler{filename: "upload.html"})
+	http.HandleFunc("/uploader", uploaderHandler)
+	http.Handle("/avatars/", http.StripPrefix("/avatars/", http.FileServer(http.Dir("chat/avatars"))))
 	go r.run()
 	log.Println("Starting web server on", *addr)
 	if err := http.ListenAndServe(":8080", nil); err != nil {

@@ -1,20 +1,40 @@
 package main
 
 import (
+	"crypto/md5"
 	"fmt"
 	"github.com/stretchr/gomniauth"
 	"github.com/stretchr/objx"
+	"io"
+	"log"
 	"net/http"
 	"strings"
+	"time"
 )
+
+import gomniauthcommon "github.com/stretchr/gomniauth/common"
+
+type ChatUser interface {
+	UniqueID() string
+	AvatarURL() string
+}
+
+type chatUser struct {
+	gomniauthcommon.User
+	uniqueID string
+}
+
+func (u chatUser) UniqueID() string {
+	return u.uniqueID
+}
 
 type authHandler struct {
 	next http.Handler
 }
 
 func (h *authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	_, err := r.Cookie("auth")
-	if err == http.ErrNoCookie {
+	cookie, err := r.Cookie("auth")
+	if err == http.ErrNoCookie || cookie.Value == "" {
 		// not authenticated
 		w.Header().Set("Location", "/login")
 		w.WriteHeader(http.StatusTemporaryRedirect)
@@ -66,8 +86,19 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("Error when trying to get user from %s: %s", provider, err), http.StatusBadRequest)
 			return
 		}
+		chatUser := &chatUser{User: user}
+		m := md5.New()
+		io.WriteString(m, strings.ToLower(user.Email()))
+		chatUser.uniqueID = fmt.Sprintf("%x", m.Sum(nil))
+		avatarURL, err := avatars.GetAvatarURL(chatUser)
+		if err != nil {
+			log.Fatalln("Error when trying to GetAvatarURL", "-", err)
+		}
 		authCookieValue := objx.New(map[string]interface{}{
-			"name": user.Name(),
+			"userid":     chatUser.uniqueID,
+			"name":       user.Name(),
+			"avatar_url": avatarURL,
+			"email":      user.Email(),
 		}).MustBase64()
 		http.SetCookie(w, &http.Cookie{
 			Name:  "auth",
@@ -81,4 +112,16 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Auth action %s not supported", action)
 	}
 
+}
+
+func logoutHandler(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:    "auth",
+		Value:   "",
+		Path:    "/",
+		Expires: time.Now(),
+		MaxAge:  -1,
+	})
+	w.Header().Set("Location", "/chat")
+	w.WriteHeader(http.StatusTemporaryRedirect)
 }

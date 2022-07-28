@@ -16,6 +16,7 @@ type room struct {
 	// all current clinets in this room
 	clients map[*client]bool
 	tracer  trace.Tracer
+	avatar  Avatar
 }
 
 func (r *room) run() {
@@ -71,7 +72,7 @@ func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	client.read()
 }
 
-func newRoom() *room {
+func newRoom(avatar Avatar) *room {
 	return &room{
 		forward: make(chan *message),
 		join:    make(chan *client),
