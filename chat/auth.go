@@ -84,3 +84,15 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+func logoutHandler(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:    "auth",
+		Value:   "",
+		Path:    "/",
+		Expires: time.Now(),
+		MaxAge:  -1,
+	})
+	w.Header().Set("Location", "/chat")
+	w.WriteHeader(http.StatusTemporaryRedirect)
+}
