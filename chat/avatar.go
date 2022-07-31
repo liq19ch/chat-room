@@ -49,7 +49,7 @@ type FileSystemAvatar struct{}
 var UseFileAvatar FileSystemAvatar
 
 func (FileSystemAvatar) GetAvatarURL(u ChatUser) (string, error) {
-	if files, err := ioutil.ReadDir("avatars"); err == nil {
+	if files, err := ioutil.ReadDir("chat/avatars"); err == nil {
 		for _, file := range files {
 			if file.IsDir() {
 				continue
